@@ -63,6 +63,16 @@ INTERNAL_SERVICE_FEATURES = [IDLE_SERVICE]
 INTERNAL_SUPPORTED_FEATURES = [IDLE_SUPPORTED_SERVICE]
 
 
+def get_default_bootmode_name(vm, bootmode):
+    if bootmode == "default":
+        return vm.features.check_with_template(
+            "boot-mode.name.default", ""
+        )
+    return vm.features.check_with_template(
+        f"boot-mode.name.{bootmode}", bootmode
+    )
+
+
 # pylint: disable=too-few-public-methods
 class RenameVMThread(common_threads.QubesThread):
     def __init__(self, vm, new_vm_name, dependencies):
@@ -912,24 +922,13 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
                     self.bootmode_names, self.bootmode_ids
                 ))
                 bootmode_widget_data.sort()
-                default_bootmode = self.vm.property_get_default("bootmode")
-                default_bootmode_name = None
-                if default_bootmode == "default":
-                    default_bootmode_name = self.vm.features.check_with_template(
-                        "boot-mode.name.default", None
-                    )
-                else:
-                    default_bootmode_name = self.vm.features.check_with_template(
-                        f"boot-mode.name.{default_bootmode}",
-                        default_bootmode
-                    )
                 utils.initialize_widget_for_property(
                     widget=self.bootmode,
                     choices=bootmode_widget_data,
                     property_name="bootmode",
                     holder=self.vm,
                     allow_default=True,
-                    default_text=default_bootmode_name
+                    default_text_provider=get_default_bootmode_name
                 )
                 if hasattr(self.vm, "appvm_default_bootmode"):
                     # TODO: Should there be an explicit check for "default" here?
@@ -954,7 +953,7 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
                         property_name="appvm_default_bootmode",
                         holder=self.vm,
                         allow_default=True,
-                        default_text=default_bootmode_name
+                        default_text_provider=get_default_bootmode_name
                     )
                 self.bootmode_kernel_opts.setText(
                     self.vm.features.check_with_template(
