@@ -229,10 +229,15 @@ def initialize_widget_for_property(*, widget, choices, holder, property_name,
             default_property = "ERROR: unavailable"
         if default_property is None:
             default_property = "none"
-        choices.append(
-            (translate("default ({})").format(
-                default_text_provider(holder, default_property)
-            ), qubesadmin.DEFAULT))
+        if default_text_provider is None:
+            choices.append(
+                (translate("default ({})").format(default_property),
+                qubesadmin.DEFAULT))
+        else:
+            choices.append(
+                (translate("default ({})").format(
+                    default_text_provider(holder, default_property)
+                ), qubesadmin.DEFAULT))
 
     # calculate current (can be default)
     try:
