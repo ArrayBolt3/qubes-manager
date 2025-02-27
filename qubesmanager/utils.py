@@ -200,7 +200,7 @@ def initialize_widget(widget, choices, selected_value=None,
 
 def initialize_widget_for_property(*, widget, choices, holder, property_name,
                                    allow_default=False, icon_getter=None,
-                                   add_current_label=True):
+                                   add_current_label=True, default_text=None):
     """
     populates widget (ListBox or ComboBox) with items, based on a listed
     property. Supports discovering the system default for the given property
@@ -216,6 +216,8 @@ def initialize_widget_for_property(*, widget, choices, holder, property_name,
     :param icon_getter: a function applied to values (from choices) that
         returns a QIcon to be used as a item icon; default None
     :param add_current_label: if initial value should be labelled as (current)
+    :param default_text: the pretty name to use instead of the property value
+    :   the default option
     :return:
     """
     if allow_default:
@@ -225,9 +227,14 @@ def initialize_widget_for_property(*, widget, choices, holder, property_name,
             default_property = "ERROR: unavailable"
         if default_property is None:
             default_property = "none"
-        choices.append(
-            (translate("default ({})").format(default_property),
-             qubesadmin.DEFAULT))
+        if default_text is None:
+            choices.append(
+                (translate("default ({})").format(default_property),
+                 qubesadmin.DEFAULT))
+        else:
+            choices.append(
+                (translate("default ({})").format(default_text),
+                 qubesadmin.DEFAULT))
 
     # calculate current (can be default)
     try:

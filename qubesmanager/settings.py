@@ -882,6 +882,86 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
                     property_name='kernel')
                 self.kernel.currentIndexChanged.connect(self.kernel_changed)
                 self.kernel_opts.setText(getattr(self.vm, 'kernelopts', '-'))
+                # load bootmode information from features
+                if hasattr(self.vm, "appvm_default_bootmode"):
+                    self.appvm_default_bootmode_desc.setVisible(True)
+                    self.appvm_default_bootmode.setVisible(True)
+                else:
+                    self.appvm_default_bootmode_desc.setVisible(False)
+                    self.appvm_default_bootmode.setVisible(False)
+                self.bootmode_ids = [
+                    x.split('.')[2] for x in self.vm.features \
+                        if x.startswith("boot-mode.kernelopts.")
+                ]
+                subject = self.vm
+                while hasattr(subject, "template"):
+                    self.bootmode_ids.extend([
+                        x.split('.')[2] for x in subject.template.features \
+                            if x.startswith("boot-mode.kernelopts.")
+                    ])
+                    subject = subject.template
+                self.bootmode_names = [
+                    self.vm.features.check_with_template(
+                        f"boot-mode.name.{x}", x
+                    ) for x in self.bootmode_ids
+                ]
+                # TODO: Should there be an explicit check for "default" here?
+                if self.vm.bootmode not in self.bootmode_ids:
+                    self.vm.bootmode = qubesadmin.DEFAULT
+                bootmode_widget_data = list(zip(
+                    self.bootmode_names, self.bootmode_ids
+                ))
+                bootmode_widget_data.sort()
+                default_bootmode = self.vm.property_get_default("bootmode")
+                default_bootmode_name = None
+                if default_bootmode == "default":
+                    default_bootmode_name = self.vm.features.check_with_template(
+                        "boot-mode.name.default", None
+                    )
+                else:
+                    default_bootmode_name = self.vm.features.check_with_template(
+                        f"boot-mode.name.{default_bootmode}",
+                        default_bootmode
+                    )
+                utils.initialize_widget_for_property(
+                    widget=self.bootmode,
+                    choices=bootmode_widget_data,
+                    property_name="bootmode",
+                    holder=self.vm,
+                    allow_default=True,
+                    default_text=default_bootmode_name
+                )
+                if hasattr(self.vm, "appvm_default_bootmode"):
+                    # TODO: Should there be an explicit check for "default" here?
+                    if self.vm.appvm_default_bootmode not in self.bootmode_ids:
+                        self.vm.appvm_default_bootmode = qubesadmin.DEFAULT
+                    # We need to recreate the bootmode_widget_data list,
+                    # because utils.initialize_widget_for_property adds a
+                    # default item to the list as a side-effect, and we'd end
+                    # up with duplicate "default" entries if we didn't
+                    # reinitialize it. Modifying
+                    # initialize_widget_for_property to operate on a list deep
+                    # copy breaks the virtualization mode combo box, making
+                    # the default mode appear as
+                    # `<object object at 0xaddress>`.
+                    bootmode_widget_data = list(zip(
+                        self.bootmode_names, self.bootmode_ids
+                    ))
+                    bootmode_widget_data.sort()
+                    utils.initialize_widget_for_property(
+                        widget=self.appvm_default_bootmode,
+                        choices=bootmode_widget_data,
+                        property_name="appvm_default_bootmode",
+                        holder=self.vm,
+                        allow_default=True,
+                        default_text=default_bootmode_name
+                    )
+                self.bootmode_kernel_opts.setText(
+                    self.vm.features.check_with_template(
+                        f"boot-mode.kernelopts.{self.vm.bootmode}",
+                        ""
+                    )
+                )
             except qubesadmin.exc.QubesDaemonAccessError:
                 self.kernel_groupbox.setVisible(False)
                 self.kernel.setEnabled(False)
@@ -1027,6 +1107,13 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
             try:
                 if utils.did_widget_selection_change(self.kernel):
                     self.vm.kernel = self.kernel.currentData()
+                if utils.did_widget_selection_change(self.bootmode):
+                    self.vm.bootmode = self.bootmode.currentData()
+                if hasattr(self.vm, "appvm_default_bootmode"):
+                    if utils.did_widget_selection_change(
+                        self.appvm_default_bootmode):
+                        self.vm.appvm_default_bootmode \
+                            = self.appvm_default_bootmode.currentData()
             except qubesadmin.exc.QubesException as ex:
                 msg.append(str(ex))
 
