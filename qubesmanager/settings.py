@@ -403,6 +403,25 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
         self.netvm_no_firewall_label.setVisible(no_firewall_state)
         self.sysnet_warning_label.setVisible(netvm is None and provides_network)
 
+    def collect_bootmode_data(self):
+        bootmode_ids = [
+            x.split('.')[2] for x in self.vm.features \
+                if x.startswith("boot-mode.kernelopts.")
+        ]
+        subject = self.vm
+        while hasattr(subject, "template"):
+            bootmode_ids.extend([
+                x.split('.')[2] for x in subject.template.features \
+                    if x.startswith("boot-mode.kernelopts.")
+            ])
+            subject = subject.template
+        bootmode_names = [
+            self.vm.features.check_with_template(
+                f"boot-mode.name.{x}", x
+            ) for x in bootmode_ids
+        ]
+        return bootmode_names, bootmode_ids
+
     def current_tab_changed(self, idx):
         if idx == self.tabs_indices["firewall"]:
             self.check_network_availability()
@@ -899,22 +918,8 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
                 else:
                     self.appvm_default_bootmode_desc.setVisible(False)
                     self.appvm_default_bootmode.setVisible(False)
-                self.bootmode_ids = [
-                    x.split('.')[2] for x in self.vm.features \
-                        if x.startswith("boot-mode.kernelopts.")
-                ]
-                subject = self.vm
-                while hasattr(subject, "template"):
-                    self.bootmode_ids.extend([
-                        x.split('.')[2] for x in subject.template.features \
-                            if x.startswith("boot-mode.kernelopts.")
-                    ])
-                    subject = subject.template
-                self.bootmode_names = [
-                    self.vm.features.check_with_template(
-                        f"boot-mode.name.{x}", x
-                    ) for x in self.bootmode_ids
-                ]
+                self.bootmode_names, self.bootmode_ids \
+                    = self.collect_bootmode_data()
                 bootmode_widget_data = list(zip(
                     self.bootmode_names, self.bootmode_ids
                 ))
