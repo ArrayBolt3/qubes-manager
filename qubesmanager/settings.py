@@ -1298,15 +1298,25 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
         return (int(m.group(1)), int(m.group(2))) >= (4, 11)
 
     def update_bootmode_kernel_opts(self):
-        if isinstance(self.bootmode.currentData(), str):
+        active_bootmode = self.bootmode.currentData()
+        if isinstance(active_bootmode, str):
             self.bootmode_kernel_opts.setText(
                 self.vm.features.check_with_template(
-                    f"boot-mode.kernelopts.{self.bootmode.currentData()}",
+                    f"boot-mode.kernelopts.{active_bootmode}",
                     ""
                 )
             )
         else:
-            self.bootmode_kernel_opts.setText("")
+            default_bootmode = self.vm.property_get_default("bootmode")
+            if default_bootmode == "default":
+                self.bootmode_kernel_opts.setText("")
+                return
+            self.bootmode_kernel_opts.setText(
+                self.vm.features.check_with_template(
+                    f"boot-mode.kernelopts.{default_bootmode}",
+                    ""
+                )
+            )
 
     def bootmode_changed(self):
         self.update_bootmode_kernel_opts()
