@@ -946,7 +946,7 @@ def test_213_bootmode_template(settings_fixture):
         _select_item(settings_window.bootmode, "default")
         assert settings_window.bootmode_kernel_opts.text() == "mode1kern"
 
-    _select_item(settings_window.bootmode, "mode2", match_strict=True)
+    _select_item(settings_window.bootmode, "mode2")
     _select_item(settings_window.appvm_default_bootmode, "Mode One")
 
     expected_call_bm = (vm_name, 'admin.vm.property.Set', 'bootmode', b'mode2')

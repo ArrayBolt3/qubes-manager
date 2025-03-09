@@ -1315,13 +1315,13 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
             default_bootmode = self.vm.property_get_default("bootmode")
             if default_bootmode == "default":
                 self.bootmode_kernel_opts.setText("")
-                return
-            self.bootmode_kernel_opts.setText(
-                self.vm.features.check_with_template(
-                    f"boot-mode.kernelopts.{default_bootmode}",
-                    ""
+            else:
+                self.bootmode_kernel_opts.setText(
+                    self.vm.features.check_with_template(
+                        f"boot-mode.kernelopts.{default_bootmode}",
+                        ""
+                    )
                 )
-            )
 
     def bootmode_changed(self):
         self.update_bootmode_kernel_opts()
