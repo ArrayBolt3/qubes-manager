@@ -949,12 +949,16 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
                         allow_default=True,
                         default_text_provider=get_default_bootmode_name
                     )
-                self.bootmode_kernel_opts.setText(
-                    self.vm.features.check_with_template(
-                        f"boot-mode.kernelopts.{self.vm.bootmode}",
-                        ""
+                if self.vm.bootmode != "default":
+                    self.bootmode_kernel_opts.setText(
+                        self.vm.features.check_with_template(
+                            f"boot-mode.kernelopts.{self.vm.bootmode}",
+                            ""
+                        )
                     )
-                )
+                else:
+                    self.bootmode_kernel_opts.setText("")
+                self.bootmode.currentIndexChanged.connect(self.bootmode_changed)
             except qubesadmin.exc.QubesDaemonAccessError:
                 self.kernel_groupbox.setVisible(False)
                 self.kernel.setEnabled(False)
@@ -1292,6 +1296,20 @@ class VMSettingsWindow(ui_settingsdlg.Ui_SettingsDialog, QtWidgets.QDialog):
             return False
 
         return (int(m.group(1)), int(m.group(2))) >= (4, 11)
+
+    def update_bootmode_kernel_opts(self):
+        if isinstance(self.bootmode.currentData(), str):
+            self.bootmode_kernel_opts.setText(
+                self.vm.features.check_with_template(
+                    f"boot-mode.kernelopts.{self.bootmode.currentData()}",
+                    ""
+                )
+            )
+        else:
+            self.bootmode_kernel_opts.setText("")
+
+    def bootmode_changed(self):
+        self.update_bootmode_kernel_opts()
 
     ######## devices tab
     def __init_devices_tab__(self):
