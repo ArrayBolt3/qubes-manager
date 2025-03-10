@@ -2,7 +2,7 @@ checks:pylint:
   before_script:
   - sudo dnf install -y python3-pip python3-pyxdg python3-pytest-qt
   - pip3 install --quiet -r ci/requirements.txt
-  - git clone https://github.com/QubesOS/qubes-core-admin-client ~/core-admin-client
+  - git clone --branch=arraybolt3/bootmodes https://github.com/ArrayBolt3/qubes-core-admin-client ~/core-admin-client
   - (cd ~/core-admin-client;python3 setup.py egg_info)
   script:
   - PYTHONPATH=~/core-admin-client python3 -m pylint qubesmanager
